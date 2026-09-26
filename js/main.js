@@ -75,22 +75,16 @@ scene.add(sunLight);
 // GROUND
 // ==========================================
 
-const groundGeometry =
-    new THREE.BoxGeometry(
-        100,
-        1,
-        100
-    );
-
-const groundMaterial =
-    new THREE.MeshStandardMaterial({
-        color: 0x444444
-    });
-
 const ground =
     new THREE.Mesh(
-        groundGeometry,
-        groundMaterial
+        new THREE.BoxGeometry(
+            100,
+            1,
+            100
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0x444444
+        })
     );
 
 ground.position.y = -0.5;
@@ -180,6 +174,17 @@ const mouseSensitivity =
     0.002;
 
 
+// ==========================================
+// RECOIL
+// ==========================================
+
+let recoil = 0;
+
+const recoilAmount = 0.025;
+
+const recoilRecovery = 8;
+
+
 document.body.addEventListener(
     "click",
     function() {
@@ -233,18 +238,6 @@ document.addEventListener(
             )
         );
 
-
-        camera.rotation.order =
-            "YXZ";
-
-
-        camera.rotation.y =
-            yaw;
-
-
-        camera.rotation.x =
-            pitch;
-
     }
 );
 
@@ -255,8 +248,6 @@ document.addEventListener(
 
 const gun = new THREE.Group();
 
-
-// Gun body
 
 const gunBody =
     new THREE.Mesh(
@@ -272,8 +263,6 @@ const gunBody =
 
 gun.add(gunBody);
 
-
-// Barrel
 
 const barrel =
     new THREE.Mesh(
@@ -296,8 +285,6 @@ barrel.position.z =
 
 gun.add(barrel);
 
-
-// Grip
 
 const grip =
     new THREE.Mesh(
@@ -322,8 +309,6 @@ grip.rotation.x =
 
 gun.add(grip);
 
-
-// Gun position
 
 gun.position.set(
     0.45,
@@ -365,13 +350,11 @@ gun.add(muzzleFlash);
 
 
 // ==========================================
-// TARGET SYSTEM
+// TARGETS
 // ==========================================
 
 const targets = [];
 
-
-// Create target
 
 function createTarget(
     x,
@@ -382,8 +365,6 @@ function createTarget(
     const target =
         new THREE.Group();
 
-
-    // Body
 
     const body =
         new THREE.Mesh(
@@ -402,8 +383,6 @@ function createTarget(
     target.add(body);
 
 
-    // Head
-
     const head =
         new THREE.Mesh(
             new THREE.SphereGeometry(
@@ -421,19 +400,11 @@ function createTarget(
     target.add(head);
 
 
-    // Health
+    target.userData.health = 100;
 
-    target.userData.health =
-        100;
+    target.userData.maxHealth = 100;
 
-    target.userData.maxHealth =
-        100;
-
-
-    // Target identifier
-
-    target.userData.isTarget =
-        true;
+    target.userData.isTarget = true;
 
 
     target.position.set(
@@ -442,15 +413,12 @@ function createTarget(
         z
     );
 
-
     scene.add(target);
 
     targets.push(target);
 
 }
 
-
-// Create test targets
 
 createTarget(
     0,
@@ -480,22 +448,9 @@ function damageTarget(
     amount
 ) {
 
-    if (!target) {
-        return;
-    }
-
-
     target.userData.health -=
         amount;
 
-
-    console.log(
-        "Target HP:",
-        target.userData.health
-    );
-
-
-    // Flash target
 
     target.traverse(
         function(object) {
@@ -527,21 +482,12 @@ function damageTarget(
 
                     if (
                         object.isMesh &&
-                        object.material
+                        object.material &&
+                        object.material.emissive
                     ) {
 
-                        if (
-                            object.material
-                                .emissive
-                        ) {
-
-                            object.material
-                                .emissive
-                                .setHex(
-                                    0x000000
-                                );
-
-                        }
+                        object.material.emissive
+                            .setHex(0x000000);
 
                     }
 
@@ -572,13 +518,7 @@ function killTarget(
     target
 ) {
 
-    console.log(
-        "TARGET ELIMINATED"
-    );
-
-
-    target.visible =
-        false;
+    target.visible = false;
 
 
     setTimeout(
@@ -587,8 +527,7 @@ function killTarget(
             target.userData.health =
                 target.userData.maxHealth;
 
-            target.visible =
-                true;
+            target.visible = true;
 
         },
         1500
@@ -598,7 +537,7 @@ function killTarget(
 
 
 // ==========================================
-// WEAPON SETTINGS
+// WEAPON
 // ==========================================
 
 let ammo = 30;
@@ -641,7 +580,6 @@ function updateAmmoUI() {
 
 }
 
-
 updateAmmoUI();
 
 
@@ -656,39 +594,28 @@ function showHitMarker() {
             "div"
         );
 
-    marker.textContent =
-        "✕";
+    marker.textContent = "✕";
 
-    marker.style.position =
-        "fixed";
+    marker.style.position = "fixed";
 
-    marker.style.left =
-        "50%";
+    marker.style.left = "50%";
 
-    marker.style.top =
-        "50%";
+    marker.style.top = "50%";
 
     marker.style.transform =
         "translate(-50%, -50%)";
 
-    marker.style.color =
-        "white";
+    marker.style.color = "white";
 
-    marker.style.fontSize =
-        "24px";
+    marker.style.fontSize = "24px";
 
-    marker.style.fontWeight =
-        "bold";
+    marker.style.fontWeight = "bold";
 
-    marker.style.pointerEvents =
-        "none";
+    marker.style.pointerEvents = "none";
 
-    marker.style.zIndex =
-        "100";
+    marker.style.zIndex = "100";
 
-    document.body.appendChild(
-        marker
-    );
+    document.body.appendChild(marker);
 
 
     setTimeout(
@@ -704,7 +631,7 @@ function showHitMarker() {
 
 
 // ==========================================
-// SHOOTING
+// SHOOT
 // ==========================================
 
 const raycaster =
@@ -745,18 +672,17 @@ function shoot() {
     updateAmmoUI();
 
 
-    // Ray from center of screen
+    // Add recoil
+
+    recoil +=
+        recoilAmount;
+
 
     raycaster.setFromCamera(
-        new THREE.Vector2(
-            0,
-            0
-        ),
+        new THREE.Vector2(0, 0),
         camera
     );
 
-
-    // Find objects
 
     const hitObjects =
         raycaster.intersectObjects(
@@ -771,14 +697,8 @@ function shoot() {
         i++
     ) {
 
-        const object =
-            hitObjects[i].object;
-
-
-        // Walk up the hierarchy
-
         let target =
-            object;
+            hitObjects[i].object;
 
 
         while (
@@ -810,8 +730,6 @@ function shoot() {
 
     }
 
-
-    // Muzzle flash
 
     muzzleFlash.visible =
         true;
@@ -875,15 +793,7 @@ document.addEventListener(
 function reload() {
 
     if (
-        ammo >= maxAmmo
-    ) {
-
-        return;
-
-    }
-
-
-    if (
+        ammo >= maxAmmo ||
         reserveAmmo <= 0
     ) {
 
@@ -907,23 +817,18 @@ function reload() {
 
     reserveAmmo -= amount;
 
-
     updateAmmoUI();
 
 }
 
 
 // ==========================================
-// CLOCK
+// MOVEMENT
 // ==========================================
 
 const clock =
     new THREE.Clock();
 
-
-// ==========================================
-// PLAYER MOVEMENT
-// ==========================================
 
 function updatePlayer(delta) {
 
@@ -1009,8 +914,6 @@ function updatePlayer(delta) {
     }
 
 
-    // Gravity
-
     player.velocityY -=
         20 * delta;
 
@@ -1020,8 +923,6 @@ function updatePlayer(delta) {
         delta;
 
 
-    // Ground
-
     if (
         camera.position.y <=
         player.height
@@ -1030,13 +931,40 @@ function updatePlayer(delta) {
         camera.position.y =
             player.height;
 
-        player.velocityY =
-            0;
+        player.velocityY = 0;
 
-        player.onGround =
-            true;
+        player.onGround = true;
 
     }
+
+}
+
+
+// ==========================================
+// CAMERA + RECOIL
+// ==========================================
+
+function updateCamera(delta) {
+
+    // Slowly recover recoil
+
+    recoil = THREE.MathUtils.lerp(
+        recoil,
+        0,
+        recoilRecovery * delta
+    );
+
+
+    camera.rotation.order =
+        "YXZ";
+
+
+    camera.rotation.y =
+        yaw;
+
+
+    camera.rotation.x =
+        pitch - recoil;
 
 }
 
@@ -1059,9 +987,9 @@ function animate() {
         );
 
 
-    updatePlayer(
-        delta
-    );
+    updatePlayer(delta);
+
+    updateCamera(delta);
 
 
     if (shooting) {
@@ -1077,7 +1005,6 @@ function animate() {
     );
 
 }
-
 
 animate();
 
