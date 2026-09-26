@@ -369,12 +369,15 @@ const weaponModels = {
 
 let gun = weaponModels.pistol;
 
-camera.add(gun);
+camera.add(weaponModels.pistol);
+camera.add(weaponModels.smg);
+camera.add(weaponModels.shotgun);
 
-scene.add(camera);
-
+weaponModels.pistol.visible = true;
 weaponModels.smg.visible = false;
 weaponModels.shotgun.visible = false;
+
+scene.add(camera);
 
 
 // ==========================================
