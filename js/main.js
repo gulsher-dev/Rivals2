@@ -1,4 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+import { createPistol, createSMG, createShotgun } from './weapons.js';
 
 // ==========================================
 // SCENE
@@ -360,80 +361,20 @@ let recoil = 0;
 // GUN
 // ==========================================
 
-const gun =
-    new THREE.Group();
+const weaponModels = {
+    pistol: createPistol(),
+    smg: createSMG(),
+    shotgun: createShotgun()
+};
 
-
-const gunBody =
-    new THREE.Mesh(
-        new THREE.BoxGeometry(
-            0.35,
-            0.25,
-            1.4
-        ),
-        new THREE.MeshStandardMaterial({
-            color: 0x222222
-        })
-    );
-
-gun.add(gunBody);
-
-
-const barrel =
-    new THREE.Mesh(
-        new THREE.CylinderGeometry(
-            0.055,
-            0.055,
-            0.8,
-            12
-        ),
-        new THREE.MeshStandardMaterial({
-            color: 0x111111
-        })
-    );
-
-barrel.rotation.x =
-    Math.PI / 2;
-
-barrel.position.z =
-    -0.95;
-
-gun.add(barrel);
-
-
-const grip =
-    new THREE.Mesh(
-        new THREE.BoxGeometry(
-            0.18,
-            0.45,
-            0.25
-        ),
-        new THREE.MeshStandardMaterial({
-            color: 0x151515
-        })
-    );
-
-grip.position.y =
-    -0.3;
-
-grip.position.z =
-    0.25;
-
-grip.rotation.x =
-    -0.2;
-
-gun.add(grip);
-
-
-gun.position.set(
-    0.45,
-    -0.35,
-    -0.8
-);
+let gun = weaponModels.pistol;
 
 camera.add(gun);
 
 scene.add(camera);
+
+weaponModels.smg.visible = false;
+weaponModels.shotgun.visible = false;
 
 
 // ==========================================
@@ -461,7 +402,7 @@ muzzleFlash.position.set(
 muzzleFlash.visible =
     false;
 
-gun.add(muzzleFlash);
+camera.add(muzzleFlash);
 
 
 // ==========================================
@@ -717,9 +658,13 @@ function switchWeapon(
 
     }
 
-
+weaponModels[currentWeapon].visible = false;
+    
     currentWeapon =
         weaponName;
+
+    gun = weaponModels[currentWeapon];
+gun.visible = true;
 
 
     ammo =
