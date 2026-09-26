@@ -1,19 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Rivals</title>
 
-    <link rel="stylesheet" href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
 </head>
 
 <body>
 
+    <!-- Game -->
+
     <div id="game"></div>
 
-    <script type="module" src="js/main.js"></script>
+
+    <!-- Crosshair -->
+
+    <div id="crosshair">
+
+        <div class="crosshair-line horizontal"></div>
+
+        <div class="crosshair-line vertical"></div>
+
+    </div>
+
+
+    <!-- HUD -->
+
+    <div id="hud">
+
+        <div class="game-title">
+            RIVALS
+        </div>
+
+
+        <div class="stats">
+
+            <div class="health">
+                HP <span id="health">100</span>
+            </div>
+
+
+            <div class="ammo">
+                AMMO
+                <span id="ammo">30</span>
+                /
+                <span id="reserve">120</span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script
+        type="module"
+        src="js/main.js"
+    ></script>
 
 </body>
+
 </html>
