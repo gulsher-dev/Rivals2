@@ -49,18 +49,18 @@ document
 // LIGHTING
 // ==========================================
 
-const ambientLight = new THREE.AmbientLight(
-    0xffffff,
-    0.8
+scene.add(
+    new THREE.AmbientLight(
+        0xffffff,
+        0.8
+    )
 );
 
-scene.add(ambientLight);
-
-
-const sunLight = new THREE.DirectionalLight(
-    0xffffff,
-    1
-);
+const sunLight =
+    new THREE.DirectionalLight(
+        0xffffff,
+        1
+    );
 
 sunLight.position.set(
     10,
@@ -148,6 +148,35 @@ window.addEventListener(
 
         }
 
+
+        // Weapon switching
+
+        if (
+            event.code === "Digit1"
+        ) {
+
+            switchWeapon("pistol");
+
+        }
+
+
+        if (
+            event.code === "Digit2"
+        ) {
+
+            switchWeapon("smg");
+
+        }
+
+
+        if (
+            event.code === "Digit3"
+        ) {
+
+            switchWeapon("shotgun");
+
+        }
+
     }
 );
 
@@ -172,17 +201,6 @@ let pitch = 0;
 
 const mouseSensitivity =
     0.002;
-
-
-// ==========================================
-// RECOIL
-// ==========================================
-
-let recoil = 0;
-
-const recoilAmount = 0.025;
-
-const recoilRecovery = 8;
 
 
 document.body.addEventListener(
@@ -243,10 +261,107 @@ document.addEventListener(
 
 
 // ==========================================
+// WEAPON DATA
+// ==========================================
+
+const weapons = {
+
+    pistol: {
+
+        name: "PISTOL",
+
+        damage: 35,
+
+        fireRate: 300,
+
+        magazineSize: 12,
+
+        reserveAmmo: 60,
+
+        automatic: false,
+
+        pellets: 1,
+
+        recoil: 0.035
+
+    },
+
+
+    smg: {
+
+        name: "SMG",
+
+        damage: 18,
+
+        fireRate: 80,
+
+        magazineSize: 30,
+
+        reserveAmmo: 120,
+
+        automatic: true,
+
+        pellets: 1,
+
+        recoil: 0.018
+
+    },
+
+
+    shotgun: {
+
+        name: "SHOTGUN",
+
+        damage: 12,
+
+        fireRate: 700,
+
+        magazineSize: 6,
+
+        reserveAmmo: 36,
+
+        automatic: false,
+
+        pellets: 8,
+
+        recoil: 0.08
+
+    }
+
+};
+
+
+// ==========================================
+// CURRENT WEAPON
+// ==========================================
+
+let currentWeapon =
+    "pistol";
+
+
+let ammo =
+    weapons[currentWeapon]
+        .magazineSize;
+
+
+let reserveAmmo =
+    weapons[currentWeapon]
+        .reserveAmmo;
+
+
+let lastShot = 0;
+
+let shooting = false;
+
+let recoil = 0;
+
+
+// ==========================================
 // GUN
 // ==========================================
 
-const gun = new THREE.Group();
+const gun =
+    new THREE.Group();
 
 
 const gunBody =
@@ -353,9 +468,6 @@ gun.add(muzzleFlash);
 // TARGETS
 // ==========================================
 
-const targets = [];
-
-
 function createTarget(
     x,
     y,
@@ -402,8 +514,6 @@ function createTarget(
 
     target.userData.health = 100;
 
-    target.userData.maxHealth = 100;
-
     target.userData.isTarget = true;
 
 
@@ -414,8 +524,6 @@ function createTarget(
     );
 
     scene.add(target);
-
-    targets.push(target);
 
 }
 
@@ -465,9 +573,6 @@ function damageTarget(
                         0xff0000
                     );
 
-                object.material.emissiveIntensity =
-                    1;
-
             }
 
         }
@@ -503,56 +608,24 @@ function damageTarget(
         target.userData.health <= 0
     ) {
 
-        killTarget(target);
+        target.visible = false;
+
+
+        setTimeout(
+            function() {
+
+                target.userData.health =
+                    100;
+
+                target.visible = true;
+
+            },
+            1500
+        );
 
     }
 
 }
-
-
-// ==========================================
-// TARGET DEATH
-// ==========================================
-
-function killTarget(
-    target
-) {
-
-    target.visible = false;
-
-
-    setTimeout(
-        function() {
-
-            target.userData.health =
-                target.userData.maxHealth;
-
-            target.visible = true;
-
-        },
-        1500
-    );
-
-}
-
-
-// ==========================================
-// WEAPON
-// ==========================================
-
-let ammo = 30;
-
-const maxAmmo = 30;
-
-let reserveAmmo = 120;
-
-let shooting = false;
-
-let lastShot = 0;
-
-const fireRate = 110;
-
-const damage = 25;
 
 
 // ==========================================
@@ -570,7 +643,7 @@ const reserveElement =
     );
 
 
-function updateAmmoUI() {
+function updateHUD() {
 
     ammoElement.textContent =
         ammo;
@@ -580,7 +653,95 @@ function updateAmmoUI() {
 
 }
 
-updateAmmoUI();
+
+updateHUD();
+
+
+// ==========================================
+// WEAPON NAME
+// ==========================================
+
+const weaponName =
+    document.createElement("div");
+
+weaponName.style.position =
+    "fixed";
+
+weaponName.style.bottom =
+    "70px";
+
+weaponName.style.right =
+    "30px";
+
+weaponName.style.color =
+    "white";
+
+weaponName.style.fontSize =
+    "20px";
+
+weaponName.style.fontWeight =
+    "bold";
+
+weaponName.style.pointerEvents =
+    "none";
+
+document.body.appendChild(
+    weaponName
+);
+
+
+function updateWeaponName() {
+
+    weaponName.textContent =
+        weapons[currentWeapon].name;
+
+}
+
+
+updateWeaponName();
+
+
+// ==========================================
+// SWITCH WEAPON
+// ==========================================
+
+function switchWeapon(
+    weaponName
+) {
+
+    if (
+        !weapons[weaponName]
+    ) {
+
+        return;
+
+    }
+
+
+    currentWeapon =
+        weaponName;
+
+
+    ammo =
+        weapons[currentWeapon]
+            .magazineSize;
+
+
+    reserveAmmo =
+        weapons[currentWeapon]
+            .reserveAmmo;
+
+
+    lastShot = 0;
+
+    recoil = 0;
+
+
+    updateHUD();
+
+    updateWeaponName();
+
+}
 
 
 // ==========================================
@@ -594,28 +755,39 @@ function showHitMarker() {
             "div"
         );
 
-    marker.textContent = "✕";
+    marker.textContent =
+        "✕";
 
-    marker.style.position = "fixed";
+    marker.style.position =
+        "fixed";
 
-    marker.style.left = "50%";
+    marker.style.left =
+        "50%";
 
-    marker.style.top = "50%";
+    marker.style.top =
+        "50%";
 
     marker.style.transform =
         "translate(-50%, -50%)";
 
-    marker.style.color = "white";
+    marker.style.color =
+        "white";
 
-    marker.style.fontSize = "24px";
+    marker.style.fontSize =
+        "24px";
 
-    marker.style.fontWeight = "bold";
+    marker.style.fontWeight =
+        "bold";
 
-    marker.style.pointerEvents = "none";
+    marker.style.pointerEvents =
+        "none";
 
-    marker.style.zIndex = "100";
+    marker.style.zIndex =
+        "100";
 
-    document.body.appendChild(marker);
+    document.body.appendChild(
+        marker
+    );
 
 
     setTimeout(
@@ -640,13 +812,17 @@ const raycaster =
 
 function shoot() {
 
+    const weapon =
+        weapons[currentWeapon];
+
+
     const now =
         performance.now();
 
 
     if (
         now - lastShot <
-        fireRate
+        weapon.fireRate
     ) {
 
         return;
@@ -669,62 +845,79 @@ function shoot() {
 
     ammo--;
 
-    updateAmmoUI();
+    updateHUD();
 
-
-    // Add recoil
 
     recoil +=
-        recoilAmount;
+        weapon.recoil;
 
 
-    raycaster.setFromCamera(
-        new THREE.Vector2(0, 0),
-        camera
-    );
-
-
-    const hitObjects =
-        raycaster.intersectObjects(
-            scene.children,
-            true
-        );
-
+    // Multiple pellets for shotgun
 
     for (
         let i = 0;
-        i < hitObjects.length;
+        i < weapon.pellets;
         i++
     ) {
 
-        let target =
-            hitObjects[i].object;
+        raycaster.setFromCamera(
+            new THREE.Vector2(
+                (Math.random() - 0.5) *
+                (weapon.pellets > 1
+                    ? 0.08
+                    : 0),
+                (Math.random() - 0.5) *
+                (weapon.pellets > 1
+                    ? 0.08
+                    : 0)
+            ),
+            camera
+        );
 
 
-        while (
-            target &&
-            !target.userData.isTarget
-        ) {
-
-            target =
-                target.parent;
-
-        }
-
-
-        if (
-            target &&
-            target.userData.isTarget
-        ) {
-
-            damageTarget(
-                target,
-                damage
+        const hits =
+            raycaster.intersectObjects(
+                scene.children,
+                true
             );
 
-            showHitMarker();
 
-            break;
+        for (
+            let i = 0;
+            i < hits.length;
+            i++
+        ) {
+
+            let target =
+                hits[i].object;
+
+
+            while (
+                target &&
+                !target.userData.isTarget
+            ) {
+
+                target =
+                    target.parent;
+
+            }
+
+
+            if (
+                target &&
+                target.userData.isTarget
+            ) {
+
+                damageTarget(
+                    target,
+                    weapon.damage
+                );
+
+                showHitMarker();
+
+                break;
+
+            }
 
         }
 
@@ -749,7 +942,7 @@ function shoot() {
 
 
 // ==========================================
-// MOUSE SHOOTING
+// SHOOTING INPUT
 // ==========================================
 
 document.addEventListener(
@@ -757,10 +950,21 @@ document.addEventListener(
     function(event) {
 
         if (
-            event.button === 0
+            event.button !== 0
         ) {
 
-            shooting = true;
+            return;
+
+        }
+
+
+        shooting = true;
+
+
+        if (
+            !weapons[currentWeapon]
+                .automatic
+        ) {
 
             shoot();
 
@@ -792,8 +996,21 @@ document.addEventListener(
 
 function reload() {
 
+    const weapon =
+        weapons[currentWeapon];
+
+
     if (
-        ammo >= maxAmmo ||
+        ammo >=
+        weapon.magazineSize
+    ) {
+
+        return;
+
+    }
+
+
+    if (
         reserveAmmo <= 0
     ) {
 
@@ -803,7 +1020,8 @@ function reload() {
 
 
     const needed =
-        maxAmmo - ammo;
+        weapon.magazineSize -
+        ammo;
 
 
     const amount =
@@ -817,7 +1035,8 @@ function reload() {
 
     reserveAmmo -= amount;
 
-    updateAmmoUI();
+
+    updateHUD();
 
 }
 
@@ -941,18 +1160,17 @@ function updatePlayer(delta) {
 
 
 // ==========================================
-// CAMERA + RECOIL
+// CAMERA
 // ==========================================
 
 function updateCamera(delta) {
 
-    // Slowly recover recoil
-
-    recoil = THREE.MathUtils.lerp(
-        recoil,
-        0,
-        recoilRecovery * delta
-    );
+    recoil =
+        THREE.MathUtils.lerp(
+            recoil,
+            0,
+            8 * delta
+        );
 
 
     camera.rotation.order =
@@ -992,7 +1210,13 @@ function animate() {
     updateCamera(delta);
 
 
-    if (shooting) {
+    // Automatic weapons
+
+    if (
+        shooting &&
+        weapons[currentWeapon]
+            .automatic
+    ) {
 
         shoot();
 
@@ -1005,6 +1229,7 @@ function animate() {
     );
 
 }
+
 
 animate();
 
