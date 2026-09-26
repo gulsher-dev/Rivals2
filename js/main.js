@@ -40,7 +40,9 @@ renderer.setPixelRatio(
     Math.min(window.devicePixelRatio, 2)
 );
 
-document.body.appendChild(renderer.domElement);
+document
+    .getElementById("game")
+    .appendChild(renderer.domElement);
 
 
 // ==========================================
@@ -60,7 +62,11 @@ const sunLight = new THREE.DirectionalLight(
     1
 );
 
-sunLight.position.set(10, 20, 10);
+sunLight.position.set(
+    10,
+    20,
+    10
+);
 
 scene.add(sunLight);
 
@@ -69,21 +75,23 @@ scene.add(sunLight);
 // GROUND
 // ==========================================
 
-const groundGeometry = new THREE.BoxGeometry(
-    100,
-    1,
-    100
-);
+const groundGeometry =
+    new THREE.BoxGeometry(
+        100,
+        1,
+        100
+    );
 
 const groundMaterial =
     new THREE.MeshStandardMaterial({
         color: 0x444444
     });
 
-const ground = new THREE.Mesh(
-    groundGeometry,
-    groundMaterial
-);
+const ground =
+    new THREE.Mesh(
+        groundGeometry,
+        groundMaterial
+    );
 
 ground.position.y = -0.5;
 
@@ -108,7 +116,8 @@ const player = {
 
 };
 
-camera.position.y = player.height;
+camera.position.y =
+    player.height;
 
 
 // ==========================================
@@ -117,30 +126,50 @@ camera.position.y = player.height;
 
 const keys = {};
 
-window.addEventListener("keydown", function(event) {
+window.addEventListener(
+    "keydown",
+    function(event) {
 
-    keys[event.code] = true;
+        keys[event.code] = true;
 
-    if (
-        event.code === "Space" &&
-        player.onGround
-    ) {
 
-        player.velocityY =
-            player.jumpForce;
+        // Jump
 
-        player.onGround = false;
+        if (
+            event.code === "Space" &&
+            player.onGround
+        ) {
+
+            player.velocityY =
+                player.jumpForce;
+
+            player.onGround = false;
+
+        }
+
+
+        // Reload
+
+        if (
+            event.code === "KeyR"
+        ) {
+
+            reload();
+
+        }
 
     }
+);
 
-});
 
+window.addEventListener(
+    "keyup",
+    function(event) {
 
-window.addEventListener("keyup", function(event) {
+        keys[event.code] = false;
 
-    keys[event.code] = false;
-
-});
+    }
+);
 
 
 // ==========================================
@@ -151,65 +180,457 @@ let yaw = 0;
 
 let pitch = 0;
 
-const mouseSensitivity = 0.002;
+const mouseSensitivity =
+    0.002;
 
 
-document.body.addEventListener("click", function() {
+document.body.addEventListener(
+    "click",
+    function() {
 
-    if (
-        document.pointerLockElement !== document.body
-    ) {
+        if (
+            document.pointerLockElement !==
+            document.body
+        ) {
 
-        document.body.requestPointerLock();
+            document.body.requestPointerLock();
+
+        }
 
     }
+);
 
-});
+
+document.addEventListener(
+    "mousemove",
+    function(event) {
+
+        if (
+            document.pointerLockElement !==
+            document.body
+        ) {
+
+            return;
+
+        }
 
 
-document.addEventListener("mousemove", function(event) {
+        yaw -=
+            event.movementX *
+            mouseSensitivity;
+
+
+        pitch -=
+            event.movementY *
+            mouseSensitivity;
+
+
+        const maxPitch =
+            Math.PI / 2 - 0.05;
+
+
+        pitch = Math.max(
+            -maxPitch,
+            Math.min(
+                maxPitch,
+                pitch
+            )
+        );
+
+
+        camera.rotation.order =
+            "YXZ";
+
+
+        camera.rotation.y =
+            yaw;
+
+
+        camera.rotation.x =
+            pitch;
+
+    }
+);
+
+
+// ==========================================
+// GUN
+// ==========================================
+
+const gun = new THREE.Group();
+
+
+// Main body
+
+const gunBodyGeometry =
+    new THREE.BoxGeometry(
+        0.35,
+        0.25,
+        1.4
+    );
+
+
+const gunBodyMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x222222
+    });
+
+
+const gunBody =
+    new THREE.Mesh(
+        gunBodyGeometry,
+        gunBodyMaterial
+    );
+
+gun.add(gunBody);
+
+
+// Barrel
+
+const barrelGeometry =
+    new THREE.CylinderGeometry(
+        0.055,
+        0.055,
+        0.8,
+        12
+    );
+
+
+const barrelMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x111111
+    });
+
+
+const barrel =
+    new THREE.Mesh(
+        barrelGeometry,
+        barrelMaterial
+    );
+
+
+// Cylinder normally points Y.
+// Rotate it so it points forward.
+
+barrel.rotation.x =
+    Math.PI / 2;
+
+barrel.position.z =
+    -0.95;
+
+gun.add(barrel);
+
+
+// Grip
+
+const gripGeometry =
+    new THREE.BoxGeometry(
+        0.18,
+        0.45,
+        0.25
+    );
+
+
+const gripMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x151515
+    });
+
+
+const grip =
+    new THREE.Mesh(
+        gripGeometry,
+        gripMaterial
+    );
+
+grip.position.y =
+    -0.3;
+
+grip.position.z =
+    0.25;
+
+grip.rotation.x =
+    -0.2;
+
+gun.add(grip);
+
+
+// Position gun in first-person view
+
+gun.position.set(
+    0.45,
+    -0.35,
+    -0.8
+);
+
+camera.add(gun);
+
+scene.add(camera);
+
+
+// ==========================================
+// MUZZLE FLASH
+// ==========================================
+
+const muzzleFlashGeometry =
+    new THREE.SphereGeometry(
+        0.13,
+        8,
+        8
+    );
+
+
+const muzzleFlashMaterial =
+    new THREE.MeshBasicMaterial({
+        color: 0xffaa00
+    });
+
+
+const muzzleFlash =
+    new THREE.Mesh(
+        muzzleFlashGeometry,
+        muzzleFlashMaterial
+    );
+
+
+muzzleFlash.position.set(
+    0,
+    0,
+    -1.35
+);
+
+
+muzzleFlash.visible =
+    false;
+
+
+gun.add(muzzleFlash);
+
+
+// ==========================================
+// WEAPON SETTINGS
+// ==========================================
+
+let ammo = 30;
+
+const maxAmmo = 30;
+
+let reserveAmmo = 120;
+
+let shooting = false;
+
+let lastShot = 0;
+
+const fireRate = 110;
+
+
+// ==========================================
+// HUD
+// ==========================================
+
+const ammoElement =
+    document.getElementById(
+        "ammo"
+    );
+
+
+const reserveElement =
+    document.getElementById(
+        "reserve"
+    );
+
+
+function updateAmmoUI() {
+
+    ammoElement.textContent =
+        ammo;
+
+    reserveElement.textContent =
+        reserveAmmo;
+
+}
+
+
+updateAmmoUI();
+
+
+// ==========================================
+// SHOOT
+// ==========================================
+
+const raycaster =
+    new THREE.Raycaster();
+
+
+function shoot() {
+
+    const now =
+        performance.now();
+
 
     if (
-        document.pointerLockElement !== document.body
+        now - lastShot <
+        fireRate
     ) {
 
         return;
 
     }
 
-    yaw -=
-        event.movementX *
-        mouseSensitivity;
 
-    pitch -=
-        event.movementY *
-        mouseSensitivity;
+    if (ammo <= 0) {
 
+        return;
 
-    const maxPitch =
-        Math.PI / 2 - 0.05;
+    }
 
 
-    pitch = Math.max(
-        -maxPitch,
-        Math.min(maxPitch, pitch)
+    lastShot =
+        now;
+
+
+    ammo--;
+
+    updateAmmoUI();
+
+
+    // Ray from center of screen
+
+    raycaster.setFromCamera(
+        new THREE.Vector2(0, 0),
+        camera
     );
 
 
-    camera.rotation.order = "YXZ";
+    const objectsToHit =
+        [ground];
 
-    camera.rotation.y = yaw;
 
-    camera.rotation.x = pitch;
+    const hits =
+        raycaster.intersectObjects(
+            objectsToHit,
+            true
+        );
 
-});
+
+    if (hits.length > 0) {
+
+        console.log(
+            "SHOT HIT:",
+            hits[0].point
+        );
+
+    }
+
+
+    // Muzzle flash
+
+    muzzleFlash.visible =
+        true;
+
+
+    setTimeout(
+        function() {
+
+            muzzleFlash.visible =
+                false;
+
+        },
+        50
+    );
+
+}
+
+
+// ==========================================
+// MOUSE SHOOTING
+// ==========================================
+
+document.addEventListener(
+    "mousedown",
+    function(event) {
+
+        if (
+            event.button === 0
+        ) {
+
+            shooting = true;
+
+            shoot();
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "mouseup",
+    function(event) {
+
+        if (
+            event.button === 0
+        ) {
+
+            shooting = false;
+
+        }
+
+    }
+);
+
+
+// ==========================================
+// RELOADING
+// ==========================================
+
+function reload() {
+
+    if (
+        ammo >= maxAmmo
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        reserveAmmo <= 0
+    ) {
+
+        return;
+
+    }
+
+
+    const needed =
+        maxAmmo - ammo;
+
+
+    const amount =
+        Math.min(
+            needed,
+            reserveAmmo
+        );
+
+
+    ammo += amount;
+
+    reserveAmmo -= amount;
+
+
+    updateAmmoUI();
+
+}
 
 
 // ==========================================
 // CLOCK
 // ==========================================
 
-const clock = new THREE.Clock();
+const clock =
+    new THREE.Clock();
 
 
 // ==========================================
@@ -223,8 +644,6 @@ function updatePlayer(delta) {
     let moveRight = 0;
 
 
-    // W / S
-
     if (keys["KeyW"]) {
 
         moveForward += 1;
@@ -236,9 +655,6 @@ function updatePlayer(delta) {
         moveForward -= 1;
 
     }
-
-
-    // A / D
 
     if (keys["KeyA"]) {
 
@@ -253,35 +669,40 @@ function updatePlayer(delta) {
     }
 
 
-    // --------------------------------------
-    // Movement
-    // --------------------------------------
-
     if (
         moveForward !== 0 ||
         moveRight !== 0
     ) {
 
-        const length = Math.sqrt(
-            moveForward * moveForward +
-            moveRight * moveRight
-        );
+        const length =
+            Math.sqrt(
+                moveForward *
+                moveForward +
+                moveRight *
+                moveRight
+            );
 
 
-        moveForward /= length;
+        moveForward /=
+            length;
 
-        moveRight /= length;
+        moveRight /=
+            length;
 
 
-        const sinYaw = Math.sin(yaw);
+        const sinYaw =
+            Math.sin(yaw);
 
-        const cosYaw = Math.cos(yaw);
+        const cosYaw =
+            Math.cos(yaw);
 
 
         camera.position.x +=
             (
-                -sinYaw * moveForward +
-                cosYaw * moveRight
+                -sinYaw *
+                moveForward +
+                cosYaw *
+                moveRight
             ) *
             player.speed *
             delta;
@@ -289,8 +710,10 @@ function updatePlayer(delta) {
 
         camera.position.z +=
             (
-                -cosYaw * moveForward -
-                sinYaw * moveRight
+                -cosYaw *
+                moveForward -
+                sinYaw *
+                moveRight
             ) *
             player.speed *
             delta;
@@ -298,21 +721,18 @@ function updatePlayer(delta) {
     }
 
 
-    // --------------------------------------
     // Gravity
-    // --------------------------------------
 
     player.velocityY -=
         20 * delta;
 
 
     camera.position.y +=
-        player.velocityY * delta;
+        player.velocityY *
+        delta;
 
 
-    // --------------------------------------
     // Ground
-    // --------------------------------------
 
     if (
         camera.position.y <=
@@ -337,7 +757,9 @@ function updatePlayer(delta) {
 
 function animate() {
 
-    requestAnimationFrame(animate);
+    requestAnimationFrame(
+        animate
+    );
 
 
     const delta =
@@ -348,6 +770,13 @@ function animate() {
 
 
     updatePlayer(delta);
+
+
+    if (shooting) {
+
+        shoot();
+
+    }
 
 
     renderer.render(
