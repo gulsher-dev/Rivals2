@@ -205,8 +205,98 @@ document.addEventListener(
 
 const clock = new THREE.Clock();
 
-
 function updatePlayer(delta) {
+
+    // --------------------------------------
+    // Forward / backward
+    // --------------------------------------
+
+    let forward = 0;
+    let right = 0;
+
+    if (keys["KeyW"]) {
+        forward += 1;
+    }
+
+    if (keys["KeyS"]) {
+        forward -= 1;
+    }
+
+    if (keys["KeyD"]) {
+        right += 1;
+    }
+
+    if (keys["KeyA"]) {
+        right -= 1;
+    }
+
+
+    // --------------------------------------
+    // Normalize diagonal movement
+    // --------------------------------------
+
+    const movementLength = Math.sqrt(
+        forward * forward +
+        right * right
+    );
+
+    if (movementLength > 0) {
+
+        forward /= movementLength;
+        right /= movementLength;
+
+        // Direction the player is facing
+        const forwardX = -Math.sin(yaw);
+        const forwardZ = -Math.cos(yaw);
+
+        // Direction to the player's right
+        const rightX = Math.cos(yaw);
+        const rightZ = -Math.sin(yaw);
+
+
+        // Calculate final movement
+        const moveX =
+            forwardX * forward +
+            rightX * right;
+
+        const moveZ =
+            forwardZ * forward +
+            rightZ * right;
+
+
+        camera.position.x +=
+            moveX * player.speed * delta;
+
+        camera.position.z +=
+            moveZ * player.speed * delta;
+    }
+
+
+    // --------------------------------------
+    // Gravity
+    // --------------------------------------
+
+    player.velocityY -=
+        20 * delta;
+
+    camera.position.y +=
+        player.velocityY * delta;
+
+
+    // --------------------------------------
+    // Ground collision
+    // --------------------------------------
+
+    if (camera.position.y <= player.height) {
+
+        camera.position.y =
+            player.height;
+
+        player.velocityY = 0;
+
+        player.onGround = true;
+    }
+}
 
     const direction = new THREE.Vector3();
 
