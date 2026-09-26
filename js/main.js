@@ -133,8 +133,6 @@ window.addEventListener(
         keys[event.code] = true;
 
 
-        // Jump
-
         if (
             event.code === "Space" &&
             player.onGround
@@ -147,8 +145,6 @@ window.addEventListener(
 
         }
 
-
-        // Reload
 
         if (
             event.code === "KeyR"
@@ -260,26 +256,18 @@ document.addEventListener(
 const gun = new THREE.Group();
 
 
-// Main body
-
-const gunBodyGeometry =
-    new THREE.BoxGeometry(
-        0.35,
-        0.25,
-        1.4
-    );
-
-
-const gunBodyMaterial =
-    new THREE.MeshStandardMaterial({
-        color: 0x222222
-    });
-
+// Gun body
 
 const gunBody =
     new THREE.Mesh(
-        gunBodyGeometry,
-        gunBodyMaterial
+        new THREE.BoxGeometry(
+            0.35,
+            0.25,
+            1.4
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0x222222
+        })
     );
 
 gun.add(gunBody);
@@ -287,30 +275,18 @@ gun.add(gunBody);
 
 // Barrel
 
-const barrelGeometry =
-    new THREE.CylinderGeometry(
-        0.055,
-        0.055,
-        0.8,
-        12
-    );
-
-
-const barrelMaterial =
-    new THREE.MeshStandardMaterial({
-        color: 0x111111
-    });
-
-
 const barrel =
     new THREE.Mesh(
-        barrelGeometry,
-        barrelMaterial
+        new THREE.CylinderGeometry(
+            0.055,
+            0.055,
+            0.8,
+            12
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0x111111
+        })
     );
-
-
-// Cylinder normally points Y.
-// Rotate it so it points forward.
 
 barrel.rotation.x =
     Math.PI / 2;
@@ -323,24 +299,16 @@ gun.add(barrel);
 
 // Grip
 
-const gripGeometry =
-    new THREE.BoxGeometry(
-        0.18,
-        0.45,
-        0.25
-    );
-
-
-const gripMaterial =
-    new THREE.MeshStandardMaterial({
-        color: 0x151515
-    });
-
-
 const grip =
     new THREE.Mesh(
-        gripGeometry,
-        gripMaterial
+        new THREE.BoxGeometry(
+            0.18,
+            0.45,
+            0.25
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0x151515
+        })
     );
 
 grip.position.y =
@@ -355,7 +323,7 @@ grip.rotation.x =
 gun.add(grip);
 
 
-// Position gun in first-person view
+// Gun position
 
 gun.position.set(
     0.45,
@@ -372,26 +340,17 @@ scene.add(camera);
 // MUZZLE FLASH
 // ==========================================
 
-const muzzleFlashGeometry =
-    new THREE.SphereGeometry(
-        0.13,
-        8,
-        8
-    );
-
-
-const muzzleFlashMaterial =
-    new THREE.MeshBasicMaterial({
-        color: 0xffaa00
-    });
-
-
 const muzzleFlash =
     new THREE.Mesh(
-        muzzleFlashGeometry,
-        muzzleFlashMaterial
+        new THREE.SphereGeometry(
+            0.13,
+            8,
+            8
+        ),
+        new THREE.MeshBasicMaterial({
+            color: 0xffaa00
+        })
     );
-
 
 muzzleFlash.position.set(
     0,
@@ -399,12 +358,243 @@ muzzleFlash.position.set(
     -1.35
 );
 
-
 muzzleFlash.visible =
     false;
 
-
 gun.add(muzzleFlash);
+
+
+// ==========================================
+// TARGET SYSTEM
+// ==========================================
+
+const targets = [];
+
+
+// Create target
+
+function createTarget(
+    x,
+    y,
+    z
+) {
+
+    const target =
+        new THREE.Group();
+
+
+    // Body
+
+    const body =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                1,
+                2,
+                0.5
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0x3366ff
+            })
+        );
+
+    body.position.y = 1;
+
+    target.add(body);
+
+
+    // Head
+
+    const head =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                0.35,
+                16,
+                16
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0xffcc99
+            })
+        );
+
+    head.position.y = 2.35;
+
+    target.add(head);
+
+
+    // Health
+
+    target.userData.health =
+        100;
+
+    target.userData.maxHealth =
+        100;
+
+
+    // Target identifier
+
+    target.userData.isTarget =
+        true;
+
+
+    target.position.set(
+        x,
+        y,
+        z
+    );
+
+
+    scene.add(target);
+
+    targets.push(target);
+
+}
+
+
+// Create test targets
+
+createTarget(
+    0,
+    0,
+    -10
+);
+
+createTarget(
+    -6,
+    0,
+    -15
+);
+
+createTarget(
+    7,
+    0,
+    -18
+);
+
+
+// ==========================================
+// DAMAGE
+// ==========================================
+
+function damageTarget(
+    target,
+    amount
+) {
+
+    if (!target) {
+        return;
+    }
+
+
+    target.userData.health -=
+        amount;
+
+
+    console.log(
+        "Target HP:",
+        target.userData.health
+    );
+
+
+    // Flash target
+
+    target.traverse(
+        function(object) {
+
+            if (
+                object.isMesh &&
+                object.material
+            ) {
+
+                object.material.emissive =
+                    new THREE.Color(
+                        0xff0000
+                    );
+
+                object.material.emissiveIntensity =
+                    1;
+
+            }
+
+        }
+    );
+
+
+    setTimeout(
+        function() {
+
+            target.traverse(
+                function(object) {
+
+                    if (
+                        object.isMesh &&
+                        object.material
+                    ) {
+
+                        if (
+                            object.material
+                                .emissive
+                        ) {
+
+                            object.material
+                                .emissive
+                                .setHex(
+                                    0x000000
+                                );
+
+                        }
+
+                    }
+
+                }
+            );
+
+        },
+        80
+    );
+
+
+    if (
+        target.userData.health <= 0
+    ) {
+
+        killTarget(target);
+
+    }
+
+}
+
+
+// ==========================================
+// TARGET DEATH
+// ==========================================
+
+function killTarget(
+    target
+) {
+
+    console.log(
+        "TARGET ELIMINATED"
+    );
+
+
+    target.visible =
+        false;
+
+
+    setTimeout(
+        function() {
+
+            target.userData.health =
+                target.userData.maxHealth;
+
+            target.visible =
+                true;
+
+        },
+        1500
+    );
+
+}
 
 
 // ==========================================
@@ -423,6 +613,8 @@ let lastShot = 0;
 
 const fireRate = 110;
 
+const damage = 25;
+
 
 // ==========================================
 // HUD
@@ -432,7 +624,6 @@ const ammoElement =
     document.getElementById(
         "ammo"
     );
-
 
 const reserveElement =
     document.getElementById(
@@ -455,7 +646,65 @@ updateAmmoUI();
 
 
 // ==========================================
-// SHOOT
+// HIT MARKER
+// ==========================================
+
+function showHitMarker() {
+
+    const marker =
+        document.createElement(
+            "div"
+        );
+
+    marker.textContent =
+        "✕";
+
+    marker.style.position =
+        "fixed";
+
+    marker.style.left =
+        "50%";
+
+    marker.style.top =
+        "50%";
+
+    marker.style.transform =
+        "translate(-50%, -50%)";
+
+    marker.style.color =
+        "white";
+
+    marker.style.fontSize =
+        "24px";
+
+    marker.style.fontWeight =
+        "bold";
+
+    marker.style.pointerEvents =
+        "none";
+
+    marker.style.zIndex =
+        "100";
+
+    document.body.appendChild(
+        marker
+    );
+
+
+    setTimeout(
+        function() {
+
+            marker.remove();
+
+        },
+        100
+    );
+
+}
+
+
+// ==========================================
+// SHOOTING
 // ==========================================
 
 const raycaster =
@@ -478,7 +727,9 @@ function shoot() {
     }
 
 
-    if (ammo <= 0) {
+    if (
+        ammo <= 0
+    ) {
 
         return;
 
@@ -497,28 +748,65 @@ function shoot() {
     // Ray from center of screen
 
     raycaster.setFromCamera(
-        new THREE.Vector2(0, 0),
+        new THREE.Vector2(
+            0,
+            0
+        ),
         camera
     );
 
 
-    const objectsToHit =
-        [ground];
+    // Find objects
 
-
-    const hits =
+    const hitObjects =
         raycaster.intersectObjects(
-            objectsToHit,
+            scene.children,
             true
         );
 
 
-    if (hits.length > 0) {
+    for (
+        let i = 0;
+        i < hitObjects.length;
+        i++
+    ) {
 
-        console.log(
-            "SHOT HIT:",
-            hits[0].point
-        );
+        const object =
+            hitObjects[i].object;
+
+
+        // Walk up the hierarchy
+
+        let target =
+            object;
+
+
+        while (
+            target &&
+            !target.userData.isTarget
+        ) {
+
+            target =
+                target.parent;
+
+        }
+
+
+        if (
+            target &&
+            target.userData.isTarget
+        ) {
+
+            damageTarget(
+                target,
+                damage
+            );
+
+            showHitMarker();
+
+            break;
+
+        }
 
     }
 
@@ -581,7 +869,7 @@ document.addEventListener(
 
 
 // ==========================================
-// RELOADING
+// RELOAD
 // ==========================================
 
 function reload() {
@@ -742,9 +1030,11 @@ function updatePlayer(delta) {
         camera.position.y =
             player.height;
 
-        player.velocityY = 0;
+        player.velocityY =
+            0;
 
-        player.onGround = true;
+        player.onGround =
+            true;
 
     }
 
@@ -769,7 +1059,9 @@ function animate() {
         );
 
 
-    updatePlayer(delta);
+    updatePlayer(
+        delta
+    );
 
 
     if (shooting) {
