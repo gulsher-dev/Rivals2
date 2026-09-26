@@ -9,134 +9,56 @@ function material(color) {
 export function createPistol() {
     const gun = new THREE.Group();
 
-    // =========================
-    // MAIN WHITE SLIDE
-    // =========================
-    const slide = new THREE.Mesh(
-        new THREE.BoxGeometry(0.34, 0.22, 0.85),
-        material(0xf2f2f2)
+    const loader = new GLTFLoader();
+
+    // Keep the weapon hidden while the real model loads
+    gun.visible = true;
+
+    loader.load(
+        './assets/weapons/pistol.glb',
+
+        (gltf) => {
+            const model = gltf.scene;
+
+            // Start small — we will adjust this after seeing it
+            model.scale.set(1, 1, 1);
+
+            // Position inside the weapon group
+            model.position.set(0, 0, 0);
+
+            // Make sure the model renders correctly
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+
+                    if (child.material) {
+                        child.material.needsUpdate = true;
+                    }
+                }
+            });
+
+            gun.add(model);
+
+            console.log('Rivals pistol loaded successfully');
+        },
+
+        (progress) => {
+            if (progress.total > 0) {
+                console.log(
+                    'Pistol loading:',
+                    Math.round((progress.loaded / progress.total) * 100) + '%'
+                );
+            }
+        },
+
+        (error) => {
+            console.error('Rivals pistol failed to load:', error);
+        }
     );
-    slide.position.set(0, 0.05, -0.05);
-    gun.add(slide);
 
-    // Black lower frame
-    const frame = new THREE.Mesh(
-        new THREE.BoxGeometry(0.36, 0.16, 0.65),
-        material(0x181818)
-    );
-    frame.position.set(0, -0.12, 0.08);
-    gun.add(frame);
-
-    // =========================
-    // FRONT BARREL
-    // =========================
-    const barrel = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.055, 0.055, 0.32, 12),
-        material(0x111111)
-    );
-    barrel.rotation.x = Math.PI / 2;
-    barrel.position.set(0, 0.04, -0.62);
-    gun.add(barrel);
-
-    // Barrel housing
-    const barrelHousing = new THREE.Mesh(
-        new THREE.BoxGeometry(0.22, 0.13, 0.22),
-        material(0x252525)
-    );
-    barrelHousing.position.set(0, 0.04, -0.52);
-    gun.add(barrelHousing);
-
-    // =========================
-    // GRIP
-    // =========================
-    const grip = new THREE.Mesh(
-        new THREE.BoxGeometry(0.19, 0.48, 0.25),
-        material(0x111111)
-    );
-    grip.position.set(0, -0.38, 0.23);
-    grip.rotation.x = -0.18;
-    gun.add(grip);
-
-    // Grip side panel
-    const gripPanel = new THREE.Mesh(
-        new THREE.BoxGeometry(0.205, 0.28, 0.03),
-        material(0x292929)
-    );
-    gripPanel.position.set(0, -0.37, 0.36);
-    gripPanel.rotation.x = -0.18;
-    gun.add(gripPanel);
-
-    // =========================
-    // MAGAZINE
-    // =========================
-    const magazine = new THREE.Mesh(
-        new THREE.BoxGeometry(0.14, 0.36, 0.16),
-        material(0x242424)
-    );
-    magazine.position.set(0, -0.32, 0.12);
-    gun.add(magazine);
-
-    // =========================
-    // TRIGGER
-    // =========================
-    const trigger = new THREE.Mesh(
-        new THREE.BoxGeometry(0.07, 0.13, 0.06),
-        material(0x050505)
-    );
-    trigger.position.set(0, -0.19, 0.02);
-    trigger.rotation.x = -0.2;
-    gun.add(trigger);
-
-    // =========================
-    // GREEN FRONT SIGHT
-    // =========================
-    const frontSight = new THREE.Mesh(
-        new THREE.BoxGeometry(0.07, 0.06, 0.07),
-        new THREE.MeshStandardMaterial({
-            color: 0x39ff66,
-            emissive: 0x39ff66,
-            emissiveIntensity: 2
-        })
-    );
-    frontSight.position.set(0, 0.18, -0.35);
-    gun.add(frontSight);
-
-    // =========================
-    // GREEN REAR SIGHT
-    // =========================
-    const rearSight = new THREE.Mesh(
-        new THREE.BoxGeometry(0.10, 0.06, 0.08),
-        new THREE.MeshStandardMaterial({
-            color: 0x39ff66,
-            emissive: 0x39ff66,
-            emissiveIntensity: 2
-        })
-    );
-    rearSight.position.set(0, 0.18, 0.27);
-    gun.add(rearSight);
-
-    // =========================
-    // SLIDE DETAILS
-    // =========================
-    for (let i = 0; i < 3; i++) {
-        const detail = new THREE.Mesh(
-            new THREE.BoxGeometry(0.04, 0.12, 0.07),
-            material(0x222222)
-        );
-
-        detail.position.set(
-            0,
-            0.05,
-            0.12 + i * 0.10
-        );
-
-        gun.add(detail);
-    }
-
-    // =========================
-    // FINAL POSITION
-    // =========================
-    gun.position.set(0.45, -0.35, -0.8);
+    // First-person position
+    gun.position.set(0.43, -0.34, -0.78);
 
     return gun;
 }
