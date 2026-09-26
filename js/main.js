@@ -1,6 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
 
-
 // ==========================================
 // SCENE
 // ==========================================
@@ -50,7 +49,7 @@ document.body.appendChild(renderer.domElement);
 
 const ambientLight = new THREE.AmbientLight(
     0xffffff,
-    0.7
+    0.8
 );
 
 scene.add(ambientLight);
@@ -76,9 +75,10 @@ const groundGeometry = new THREE.BoxGeometry(
     100
 );
 
-const groundMaterial = new THREE.MeshStandardMaterial({
-    color: 0x444444
-});
+const groundMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x444444
+    });
 
 const ground = new THREE.Mesh(
     groundGeometry,
@@ -95,6 +95,7 @@ scene.add(ground);
 // ==========================================
 
 const player = {
+
     height: 1.7,
 
     speed: 8,
@@ -104,46 +105,42 @@ const player = {
     velocityY: 0,
 
     onGround: true
+
 };
 
 camera.position.y = player.height;
 
 
 // ==========================================
-// KEYBOARD INPUT
+// KEYBOARD
 // ==========================================
 
 const keys = {};
 
-window.addEventListener(
-    "keydown",
-    (event) => {
+window.addEventListener("keydown", function(event) {
 
-        keys[event.code] = true;
+    keys[event.code] = true;
 
-        if (
-            event.code === "Space" &&
-            player.onGround
-        ) {
+    if (
+        event.code === "Space" &&
+        player.onGround
+    ) {
 
-            player.velocityY =
-                player.jumpForce;
+        player.velocityY =
+            player.jumpForce;
 
-            player.onGround = false;
-        }
+        player.onGround = false;
 
     }
-);
+
+});
 
 
-window.addEventListener(
-    "keyup",
-    (event) => {
+window.addEventListener("keyup", function(event) {
 
-        keys[event.code] = false;
+    keys[event.code] = false;
 
-    }
-);
+});
 
 
 // ==========================================
@@ -151,124 +148,153 @@ window.addEventListener(
 // ==========================================
 
 let yaw = 0;
+
 let pitch = 0;
 
 const mouseSensitivity = 0.002;
 
-document.body.addEventListener(
-    "click",
-    () => {
+
+document.body.addEventListener("click", function() {
+
+    if (
+        document.pointerLockElement !== document.body
+    ) {
 
         document.body.requestPointerLock();
 
     }
-);
+
+});
 
 
-document.addEventListener(
-    "mousemove",
-    (event) => {
+document.addEventListener("mousemove", function(event) {
 
-        if (
-            document.pointerLockElement !== document.body
-        ) {
-            return;
-        }
+    if (
+        document.pointerLockElement !== document.body
+    ) {
 
-        yaw -= event.movementX * mouseSensitivity;
-
-        pitch -= event.movementY * mouseSensitivity;
-
-
-        const maxPitch =
-            Math.PI / 2 - 0.05;
-
-        pitch = Math.max(
-            -maxPitch,
-            Math.min(maxPitch, pitch)
-        );
-
-
-        camera.rotation.order = "YXZ";
-
-        camera.rotation.y = yaw;
-
-        camera.rotation.x = pitch;
+        return;
 
     }
-);
+
+    yaw -=
+        event.movementX *
+        mouseSensitivity;
+
+    pitch -=
+        event.movementY *
+        mouseSensitivity;
+
+
+    const maxPitch =
+        Math.PI / 2 - 0.05;
+
+
+    pitch = Math.max(
+        -maxPitch,
+        Math.min(maxPitch, pitch)
+    );
+
+
+    camera.rotation.order = "YXZ";
+
+    camera.rotation.y = yaw;
+
+    camera.rotation.x = pitch;
+
+});
 
 
 // ==========================================
-// MOVEMENT
+// CLOCK
 // ==========================================
 
 const clock = new THREE.Clock();
 
+
+// ==========================================
+// PLAYER MOVEMENT
+// ==========================================
+
 function updatePlayer(delta) {
 
-    // --------------------------------------
-    // Forward / backward
-    // --------------------------------------
+    let moveForward = 0;
 
-    let forward = 0;
-    let right = 0;
+    let moveRight = 0;
+
+
+    // W / S
 
     if (keys["KeyW"]) {
-        forward += 1;
+
+        moveForward += 1;
+
     }
 
     if (keys["KeyS"]) {
-        forward -= 1;
+
+        moveForward -= 1;
+
+    }
+
+
+    // A / D
+
+    if (keys["KeyA"]) {
+
+        moveRight -= 1;
+
     }
 
     if (keys["KeyD"]) {
-        right += 1;
-    }
 
-    if (keys["KeyA"]) {
-        right -= 1;
+        moveRight += 1;
+
     }
 
 
     // --------------------------------------
-    // Normalize diagonal movement
+    // Movement
     // --------------------------------------
 
-    const movementLength = Math.sqrt(
-        forward * forward +
-        right * right
-    );
+    if (
+        moveForward !== 0 ||
+        moveRight !== 0
+    ) {
 
-    if (movementLength > 0) {
-
-        forward /= movementLength;
-        right /= movementLength;
-
-        // Direction the player is facing
-        const forwardX = -Math.sin(yaw);
-        const forwardZ = -Math.cos(yaw);
-
-        // Direction to the player's right
-        const rightX = Math.cos(yaw);
-        const rightZ = -Math.sin(yaw);
+        const length = Math.sqrt(
+            moveForward * moveForward +
+            moveRight * moveRight
+        );
 
 
-        // Calculate final movement
-        const moveX =
-            forwardX * forward +
-            rightX * right;
+        moveForward /= length;
 
-        const moveZ =
-            forwardZ * forward +
-            rightZ * right;
+        moveRight /= length;
+
+
+        const sinYaw = Math.sin(yaw);
+
+        const cosYaw = Math.cos(yaw);
 
 
         camera.position.x +=
-            moveX * player.speed * delta;
+            (
+                -sinYaw * moveForward +
+                cosYaw * moveRight
+            ) *
+            player.speed *
+            delta;
+
 
         camera.position.z +=
-            moveZ * player.speed * delta;
+            (
+                -cosYaw * moveForward -
+                sinYaw * moveRight
+            ) *
+            player.speed *
+            delta;
+
     }
 
 
@@ -279,83 +305,18 @@ function updatePlayer(delta) {
     player.velocityY -=
         20 * delta;
 
-    camera.position.y +=
-        player.velocityY * delta;
-
-
-    // --------------------------------------
-    // Ground collision
-    // --------------------------------------
-
-    if (camera.position.y <= player.height) {
-
-        camera.position.y =
-            player.height;
-
-        player.velocityY = 0;
-
-        player.onGround = true;
-    }
-}
-
-    const direction = new THREE.Vector3();
-
-    if (keys["KeyW"]) {
-        direction.z -= 1;
-    }
-
-    if (keys["KeyS"]) {
-        direction.z += 1;
-    }
-
-    if (keys["KeyA"]) {
-        direction.x -= 1;
-    }
-
-    if (keys["KeyD"]) {
-        direction.x += 1;
-    }
-
-
-    if (direction.length() > 0) {
-
-        direction.normalize();
-
-        direction.applyAxisAngle(
-            new THREE.Vector3(0, 1, 0),
-            yaw
-        );
-
-        camera.position.x +=
-            direction.x *
-            player.speed *
-            delta;
-
-        camera.position.z +=
-            direction.z *
-            player.speed *
-            delta;
-
-    }
-
-
-    // ======================================
-    // GRAVITY
-    // ======================================
-
-    player.velocityY -=
-        20 * delta;
 
     camera.position.y +=
         player.velocityY * delta;
 
 
-    // ======================================
-    // GROUND COLLISION
-    // ======================================
+    // --------------------------------------
+    // Ground
+    // --------------------------------------
 
     if (
-        camera.position.y <= player.height
+        camera.position.y <=
+        player.height
     ) {
 
         camera.position.y =
@@ -378,10 +339,16 @@ function animate() {
 
     requestAnimationFrame(animate);
 
+
     const delta =
-        Math.min(clock.getDelta(), 0.05);
+        Math.min(
+            clock.getDelta(),
+            0.05
+        );
+
 
     updatePlayer(delta);
+
 
     renderer.render(
         scene,
@@ -390,22 +357,25 @@ function animate() {
 
 }
 
+
 animate();
 
 
 // ==========================================
-// WINDOW RESIZE
+// RESIZE
 // ==========================================
 
 window.addEventListener(
     "resize",
-    () => {
+    function() {
 
         camera.aspect =
             window.innerWidth /
             window.innerHeight;
 
+
         camera.updateProjectionMatrix();
+
 
         renderer.setSize(
             window.innerWidth,
